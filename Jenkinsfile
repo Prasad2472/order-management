@@ -1,10 +1,9 @@
 
 pipeline {
-    agent any
-
-    tools {
-        jdk 'JDK25'
-        maven 'Maven3'
+    agent {
+        docker {
+            image 'maven:3.9.11-eclipse-temurin-25'
+        }
     }
 
     options {
@@ -18,6 +17,14 @@ pipeline {
             steps {
                 echo 'Checking out source code'
                 checkout scm
+            }
+        }
+
+        stage('Verify Environment') {
+            steps {
+                echo 'Checking Java and Maven versions'
+                sh 'java -version'
+                sh 'mvn -version'
             }
         }
 
