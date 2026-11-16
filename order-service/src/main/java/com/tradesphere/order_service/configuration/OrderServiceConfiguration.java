@@ -18,7 +18,7 @@ public class OrderServiceConfiguration {
     public NewTopic orderCreatedTopic() {
         return TopicBuilder.name("tradesphere.order.created-topic")
                 .partitions(6)
-                .replicas(3)   // use >=3 in prod
+                .replicas(1)   // use >=3 in prod
                 .config("cleanup.policy", "delete")
                 .config("retention.ms", "604800000") // 7 days
                 .build();
