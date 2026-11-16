@@ -6,39 +6,31 @@ server:
 spring:
   application:
     name: order-service
+
   kafka:
     bootstrap-servers: localhost:9092
+
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-      properties:
-        spring.json.add.type.headers: false
+
     consumer:
       group-id: order-service-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringSerializer
-      properties:
-        spring.json.trusted.packages: "*"
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
   servlet:
     multipart:
       enabled: true
       max-file-size: 5GB
       max-request-size: 5GB
 
-
-
 management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: health,info,metrics,heapdump
   endpoint:
     heapdump:
       enabled: true
-
-
-
-
-
-

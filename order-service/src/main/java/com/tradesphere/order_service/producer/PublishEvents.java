@@ -1,7 +1,5 @@
 package com.tradesphere.order_service.producer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tradesphere.order_service.entity.OrderEvent;
 import com.tradesphere.order_service.model.EventStatus;
 import com.tradesphere.order_service.repository.OrderEventRepository;
@@ -15,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -45,11 +44,8 @@ public class PublishEvents {
         logger.info("Publishing events: " + events.size());
         for (OrderEvent event : events) {
             String payload = null;
-            try {
-                payload = objectMapper.writeValueAsString(event);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            payload = objectMapper.writeValueAsString(event);
+
             kafkaTemplate.
                     send(OrderServiceUtility.ORDER_TOPIC, event.getEventId(), payload).
                     whenComplete(((result, throwable) -> {

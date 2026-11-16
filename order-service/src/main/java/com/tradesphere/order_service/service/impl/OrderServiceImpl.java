@@ -1,7 +1,5 @@
 package com.tradesphere.order_service.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tradesphere.order_service.entity.OrderEntity;
 import com.tradesphere.order_service.entity.OrderEvent;
 import com.tradesphere.order_service.exception.OrderNotFoundException;
@@ -13,6 +11,7 @@ import com.tradesphere.order_service.service.OrderService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
@@ -37,11 +36,7 @@ public class OrderServiceImpl implements OrderService {
 
     private String toJSON(Order saved) {
         String payload = null;
-        try {
-            payload = objectMapper.writeValueAsString(saved);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        payload = objectMapper.writeValueAsString(saved);
         return payload;
     }
 
