@@ -18,7 +18,5 @@ public class GlobalExceptionHandler {
         ErrorDTO errorDTO = new ErrorDTO(request.getDescription(false),
                 exception.getMessage(), 500, LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDTO);
-
     }
-
 }

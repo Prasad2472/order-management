@@ -1,69 +1,75 @@
 
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.9.11-eclipse-temurin-25'
-        }
-    }
+    agent any
 
-    options {
-        timestamps()
-        disableConcurrentBuilds()
+    environment {
+        DOCKERHUB_REPO = 'order-service'
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo 'Checking out source code'
                 checkout scm
             }
         }
 
-        stage('Verify Environment') {
+        stage('Build and Push Docker Image') {
             steps {
-                echo 'Checking Java and Maven versions'
-                sh 'java -version'
-                sh 'mvn -version'
-            }
-        }
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKERHUB_USERNAME',
+                        passwordVariable: 'DOCKERHUB_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        set -eu
 
-        stage('Build') {
-            steps {
-                echo 'Building Order Service'
-                sh 'mvn -f order-service/pom.xml clean compile'
-            }
-        }
+                        export DOCKER_CONFIG=$(mktemp -d)
 
-        stage('Unit Tests') {
-            steps {
-                echo 'Running unit and integration tests'
-                sh 'mvn -f order-service/pom.xml test'
-            }
-        }
+                        trap 'docker logout >/dev/null 2>&1 || true; rm -rf "$DOCKER_CONFIG"' EXIT
 
-        stage('Package') {
-            steps {
-                echo 'Packaging Order Service'
-                sh 'mvn -f order-service/pom.xml package -DskipTests'
+                        IMAGE_TAG=$(git rev-parse --short HEAD)
+
+                        echo "Logging into Docker Hub..."
+
+                        echo "$DOCKERHUB_TOKEN" | docker login \
+                            -u "$DOCKERHUB_USERNAME" \
+                            --password-stdin
+
+                        echo "Building Docker image..."
+
+                        docker build \
+                            --pull \
+                            -f order-service/Dockerfile \
+                            -t "$DOCKERHUB_USERNAME/$DOCKERHUB_REPO:$BUILD_NUMBER" \
+                            -t "$DOCKERHUB_USERNAME/$DOCKERHUB_REPO:$IMAGE_TAG" \
+                            -t "$DOCKERHUB_USERNAME/$DOCKERHUB_REPO:latest" \
+                            order-service
+
+                        echo "Pushing Docker images..."
+
+                        docker push "$DOCKERHUB_USERNAME/$DOCKERHUB_REPO:$BUILD_NUMBER"
+
+                        docker push "$DOCKERHUB_USERNAME/$DOCKERHUB_REPO:$IMAGE_TAG"
+
+                        docker push "$DOCKERHUB_USERNAME/$DOCKERHUB_REPO:latest"
+
+                        echo "Docker images pushed successfully!"
+                    '''
+                }
             }
         }
     }
 
     post {
-        always {
-            junit(
-                testResults: 'order-service/target/surefire-reports/*.xml',
-                allowEmptyResults: true
-            )
-        }
-
         success {
-            echo 'Order Service pipeline completed successfully!'
+            echo 'Docker image build and push completed successfully!'
         }
 
         failure {
-            echo 'Order Service pipeline failed!'
+            echo 'Pipeline failed. Check Jenkins console output.'
         }
     }
 }
